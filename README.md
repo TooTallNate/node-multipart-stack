@@ -24,9 +24,9 @@ multipart form.
           // May be fired once if there's any data that
           // comes before the first multipart boundary.
         });
-        parser.on('multipart', function(stream) {
+        parser.on('part', function(part) {
           // Fired once every part of the multipart message.
-          // 'stream' is a ReadableStream that also emits a 'headers' event
+          // 'part' is a ReadableStream that also emits a 'headers' event
         });
         parser.on('epilogue', function(data) {
           // May be fired once if there's any data that
