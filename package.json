@@ -1,0 +1,21 @@
+{
+  "name": "multipart-stack",
+  "description": "A `StreamStack` subclass that parses \"multipart\" data, often from SMTP or HTTP.",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/TooTallNate/node-multipart-stack.git"
+  },
+  "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
+  "main": "./index.js",
+  "dependencies": {
+    "stream-stack": ">= 1.1.1",
+    "bufferlist": ">= 0.0.6"
+  },
+  "directories": {
+    "lib": "."
+  },
+  "engines": {
+    "node": ">= 0.4.0"
+  }
+}
