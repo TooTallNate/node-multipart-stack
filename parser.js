@@ -1,38 +1,22 @@
 require('bufferjs');
-var StreamStack = require('stream-stack').StreamStack;
+var EventEmitter = require('events').EventEmitter;
 var inherits = require('util').inherits;
 
+var PartParser = require('./partParser');
+
 /**
- *
+ * The main parser to parse a multipart Stream into individual Stream
+ * instances. Expects a ReadableStream instance and a 'boundary' String.
  */
 function Parser(stream, boundary) {
-  StreamStack.call(this, stream, {
-    data: function onData(chunk) {
-      // '_onData' is a pointer to the current data parsing function
-      this._onData(chunk);
-    },
-    end: this._onEnd
-  });
   if (typeof boundary !== 'string') {
     throw new Error("Parser expects a String 'boundary' as a second argument");
   }
+  EventEmitter.call(this);
+  this.stream = stream;
   this.boundary = boundary;
+  this.currentPart = new PartParser(this, false);
+  this._started = false;
 }
-inherits(Parser, StreamStack);
+inherits(Parser, EventEmitter);
 module.exports = Parser;
-
-// Called when the upstream emits its 'end' event.
-Parser.prototype._onEnd = function onEnd() {}
-
-
-
-
-/**
- * Works in conjunction with the regular parent Parser to parse out
- */
-function PartParser(parent) {
-  StreamStack.call(this, parent, {
-
-  });
-}
-inherits(PartParser, StreamStack);
