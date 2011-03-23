@@ -6,6 +6,19 @@ assert.deepEqual( parseContentType('text/plain'), {
   subtype: 'plain'
 });
 
+assert.deepEqual( parseContentType('audio/ogg; codecs="Vorbis"'), {
+  type: 'audio',
+  subtype: 'ogg',
+  codecs: 'Vorbis'
+});
+
+assert.deepEqual( parseContentType('some/thing; one=1;two=2 ;'), {
+  type: 'some',
+  subtype: 'thing',
+  one: 1,
+  two: 2
+});
+
 assert.deepEqual( parseContentType('multipart/mixed; boundary="simple boundary"'), {
   type: 'multipart',
   subtype: 'mixed',

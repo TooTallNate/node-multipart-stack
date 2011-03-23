@@ -4,6 +4,7 @@ function parseContentType(contentType) {
   var parts = contentType.split(';');
   for (var i=0, l=parts.length; i<l; i++) {
     var part = parts[i].trim();
+    if (part.length === 0) continue;
     var firstEquals = part.indexOf('=');
     if (firstEquals > 0) {
       var name = part.substring(0, firstEquals);
