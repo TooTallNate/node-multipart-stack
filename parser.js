@@ -3,6 +3,8 @@ var EventEmitter = require('events').EventEmitter;
 var inherits = require('util').inherits;
 
 var PartParser = require('./partParser');
+var CRLF = '\r\n';
+var BOUNDARY_SIDE = '--';
 
 /**
  * The main parser to parse a multipart Stream into individual Stream
@@ -14,12 +16,28 @@ function Parser(stream, boundary) {
   }
   EventEmitter.call(this);
   this.stream = stream;
+  //stream.on('data', console.log);
   this.boundary = boundary;
+
+  // The PartParser first checks for the ending boundary, if that
+  // isn't there, then it checks for the normal one
+  this.beginningOfBoundary = new Buffer(CRLF[0], 'ascii');
+  this.normalBoundary = new Buffer(CRLF+BOUNDARY_SIDE+boundary+CRLF, 'ascii');
+  this.endingBoundary = new Buffer(CRLF+BOUNDARY_SIDE+boundary+BOUNDARY_SIDE+CRLF, 'ascii');
+  console.error(this.normalBoundary, ''+this.normalBoundary);
+  console.error(this.endingBoundary, ''+this.endingBoundary);
+
+  // This _started nonsense is used by the PartParser, and only in the case of the
+  // very first Stream (preamble). It is to counter any 'data' event upstream due to
+  // the nextTick call below.
   this._started = false;
-  this.currentPart = new PartParser(this, false);
   this.once('_start', this._onStart);
 
-  // We have to nextTick emitting 'preamble', since we have to give time
+  // The first 'part' is the preamble. It is possible that this Stream will emit
+  // no data whatsoever, if the multipart upstream begins with a proper boundary.
+  this._createPartParser(false);
+
+  // We have to nextTick emitting 'preamble', so that we give time
   // for the user to attach an event handler for the event.
   var self = this;
   process.nextTick(function() {
@@ -34,4 +52,16 @@ module.exports = Parser;
 // is called after we can assume the user has set up their event listeners. 
 Parser.prototype._onStart = function onStart() {
  this._started = true;
+}
+
+Parser.prototype._createPartParser = function createPartParser(parseHeaders) {
+  this.currentPart = new PartParser(this, parseHeaders);
+  this.currentPart.once('end', this._partParserFinished.bind(this));
+}
+
+Parser.prototype._partParserFinished = function partParserFinished() {
+  console.error(this.currentPart.isFinalBoundary);
+  this._createPartParser(false); // TODO: True for normal bodies, false for the final one
+  this.emit(this.currentPart.isFinalBoundary ? 'epilogue' : 'part', this.currentPart);
+  
 }
