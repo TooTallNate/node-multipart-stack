@@ -65,25 +65,27 @@ PartParser.prototype._parseBody = function parseBody(chunk) {
     this._bufferData(chunk);
   }
   var buf = this._buffers.take();
-  //console.error(buf);
+  console.error(buf+'\n\n\n\n');
   if (buf.length >= this.parent.endingBoundary.length) {
     if (buf.indexOf(this.parent.endingBoundary) === 0) {
       this.isFinalBoundary = true;
       this._buffers.advance(this.parent.endingBoundary.length);
-      console.error('found ending boundary!');
+      //console.error('found ending boundary!');
       this._end();
     } else if (buf.indexOf(this.parent.normalBoundary) === 0) {
       this._buffers.advance(this.parent.normalBoundary.length);
-      console.error('found normal boundary');
+      //console.error('found normal boundary');
       this._end();
     } else {
       var s = buf.indexOf(this.parent.beginningOfBoundary);
-      if (s < 1) {
+      if (s === -1) {
         s = this.parent.endingBoundary.length;
       }
       //console.error(s);
+      require('assert').ok(s > 0);
       var slice = buf.slice(0, s);
       this._buffers.advance(s);
+      console.error("Emitting data: ", slice);
       this.emit('data', slice);
       this._parseBody();
     }
@@ -101,7 +103,7 @@ PartParser.prototype._parseBody = function parseBody(chunk) {
 //   2) We're parsing the epilogue, and anything in the buffers should be emitted
 //      to the user. There will be no ending boundary to parse out.
 PartParser.prototype._onEnd = function onEnd() {
-  console.error('got "end" event from upstream');
+  //console.error('got "end" event from upstream');
   this._parseBody();
   if (this.parent._started) {
     this._end();
@@ -112,13 +114,12 @@ PartParser.prototype._onEnd = function onEnd() {
 
 // Ensures we only fire the 'end' event once per part.
 PartParser.prototype._end = function () {
-  console.error('got "_end"');
+  //console.error('got "_end"');
   if (!this._ended) {
     this._ended = true;
     this.emit('end');
-    console.error("Leftover: ", this._buffers.take('utf8'));
-    //if (this._buffers.length > 0) {
-    //  this.parent.currentPart.emit('data', this._buffers.take());
-    //}
+    if (this._buffers.length > 0) {
+      this.parent.currentPart._onData(this._buffers.take());
+    }
   }
 }
