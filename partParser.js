@@ -64,9 +64,9 @@ PartParser.prototype._parseBody = function parseBody(chunk) {
   if (chunk) {
     this._bufferData(chunk);
   }
-  var buf = this._buffers.take();
-  console.error(buf+'\n\n\n\n');
-  if (buf.length >= this.parent.endingBoundary.length) {
+  if (this._buffers.length >= this.parent.endingBoundary.length) {
+    var buf = this._buffers.take();
+    //console.error("Gonna do something with: ", buf, buf+'');
     if (buf.indexOf(this.parent.endingBoundary) === 0) {
       this.isFinalBoundary = true;
       this._buffers.advance(this.parent.endingBoundary.length);
@@ -78,22 +78,23 @@ PartParser.prototype._parseBody = function parseBody(chunk) {
       this._end();
     } else {
       var s = buf.indexOf(this.parent.beginningOfBoundary);
+      if (s === 0) {
+        s = buf.slice(1).indexOf(this.parent.beginningOfBoundary);
+        if (s !== -1) s++;
+      }
       if (s === -1) {
         s = this.parent.endingBoundary.length;
       }
       //console.error(s);
-      require('assert').ok(s > 0);
       var slice = buf.slice(0, s);
       this._buffers.advance(s);
-      console.error("Emitting data: ", slice);
+      //console.error("Emitting data: ", slice, slice+'');
       this.emit('data', slice);
       this._parseBody();
     }
+  } else {
+    //console.error('waiting for more data');
   }
-  //var beginningOfBoundary = buf.indexOf(this.parent.beginningOfBoundary); // \r
-  //console.error(beginningOfBoundary);
-  //if (beginningOfBoundary >= 1) {
-  //}
 }
 
 
@@ -104,7 +105,13 @@ PartParser.prototype._parseBody = function parseBody(chunk) {
 //      to the user. There will be no ending boundary to parse out.
 PartParser.prototype._onEnd = function onEnd() {
   //console.error('got "end" event from upstream');
-  this._parseBody();
+  if (this._buffers.length > 0) {
+    // emit any remaining 'data' in the buffers
+    var remaining = this._buffers.take();
+    this._buffers.advance(remaining.length);
+    //console.error(remaining, remaining + '');
+    this.emit('data', remaining);
+  }
   if (this.parent._started) {
     this._end();
   } else {
@@ -117,6 +124,7 @@ PartParser.prototype._end = function () {
   //console.error('got "_end"');
   if (!this._ended) {
     this._ended = true;
+    this.cleanup();
     this.emit('end');
     if (this._buffers.length > 0) {
       this.parent.currentPart._onData(this._buffers.take());

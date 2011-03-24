@@ -16,7 +16,6 @@ function Parser(stream, boundary) {
   }
   EventEmitter.call(this);
   this.stream = stream;
-  //stream.on('data', console.log);
   this.boundary = boundary;
 
   // The PartParser first checks for the ending boundary, if that
@@ -24,7 +23,6 @@ function Parser(stream, boundary) {
   this.beginningOfBoundary = new Buffer(CRLF[0], 'ascii');
   this.normalBoundary = new Buffer(CRLF+BOUNDARY_SIDE+boundary+CRLF, 'ascii');
   this.endingBoundary = new Buffer(CRLF+BOUNDARY_SIDE+boundary+BOUNDARY_SIDE+CRLF, 'ascii');
-  console.error(this.endingBoundary);
 
   // This _started nonsense is used by the PartParser, and only in the case of the
   // very first Stream (preamble). It is to counter any 'data' event upstream due to
@@ -54,13 +52,15 @@ Parser.prototype._onStart = function onStart() {
 }
 
 Parser.prototype._createPartParser = function createPartParser(parseHeaders) {
-  this.currentPart = new PartParser(this, parseHeaders);
-  this.currentPart.once('end', this._partParserFinished.bind(this));
+  this.currentPart = new PartParser(this, false);
+  if (!parseHeaders) {
+    this.currentPart.once('end', this._partParserFinished.bind(this));
+  }
 }
 
 Parser.prototype._partParserFinished = function partParserFinished() {
-  //console.error(this.currentPart.isFinalBoundary);
-  this._createPartParser(false); // TODO: True for normal bodies, false for the final one
-  this.emit(this.currentPart.isFinalBoundary ? 'epilogue' : 'part', this.currentPart);
-  
+  var isEpilogue = this.currentPart.isFinalBoundary;
+  //console.error('isEpilogue:', isEpilogue);
+  this._createPartParser(isEpilogue); // TODO: True for normal bodies, false for the final one
+  this.emit(isEpilogue ? 'epilogue' : 'part', this.currentPart);
 }
