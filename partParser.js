@@ -1,6 +1,7 @@
 require('bufferjs');
 var BufferList = require('bufferlist');
 var StreamStack = require('stream-stack').StreamStack;
+var HeaderParser = require('header-stack').Parser;
 var inherits = require('util').inherits;
 
 /**
@@ -17,16 +18,21 @@ function PartParser(parent, parseHeaders) {
     },
     end: this._onEnd
   });
+  //console.error('creating new PartParser; parseHeaders:', parseHeaders);
   this.parent = parent;
   this.isFinalBoundary = false;
   this._ended = false;
   this._buffers = new BufferList();
+  var self = this;
+  if (parseHeaders) {
+    this._headerParser = new HeaderParser(parent.stream);
+    this._headerParser.on('headers', this._onHeaders.bind(this));
+  }
   if (parent._started) {
     this._onData = parseHeaders ? this._parseHeaders : this._parseBody;
   } else {
     // We just have to buffer any incoming data until the Parser starts.
     this._onData = this._bufferData;
-    var self = this;
     parent.on('_start', function() {
       self._onData = parseHeaders ? self._parseHeaders : self._parseBody;
       if (self._buffers.length > 0) {
@@ -46,6 +52,16 @@ PartParser.prototype._bufferData = function bufferData(chunk) {
 }
 
 PartParser.prototype._parseHeaders = function parseHeaders(chunk) {
+  //console.error(chunk);
+  this._headerParser._onData(chunk);
+}
+
+PartParser.prototype._onHeaders = function onHeaders(headers, leftover) {
+  this._onData = this._parseBody;
+  this.emit('headers', headers);
+  if (leftover) {
+    this._onData(leftover);
+  }
 }
 
 // Parsing Logic:

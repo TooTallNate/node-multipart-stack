@@ -32,7 +32,7 @@ function Parser(stream, boundary) {
 
   // The first 'part' is the preamble. It is possible that this Stream will emit
   // no data whatsoever, if the multipart upstream begins with a proper boundary.
-  this._createPartParser(false);
+  this._createPartParser(false, true);
 
   // We have to nextTick emitting 'preamble', so that we give time
   // for the user to attach an event handler for the event.
@@ -51,9 +51,9 @@ Parser.prototype._onStart = function onStart() {
  this._started = true;
 }
 
-Parser.prototype._createPartParser = function createPartParser(parseHeaders) {
-  this.currentPart = new PartParser(this, false);
-  if (!parseHeaders) {
+Parser.prototype._createPartParser = function createPartParser(parseHeaders, listenForEnd) {
+  this.currentPart = new PartParser(this, parseHeaders);
+  if (listenForEnd) {
     this.currentPart.once('end', this._partParserFinished.bind(this));
   }
 }
@@ -61,6 +61,6 @@ Parser.prototype._createPartParser = function createPartParser(parseHeaders) {
 Parser.prototype._partParserFinished = function partParserFinished() {
   var isEpilogue = this.currentPart.isFinalBoundary;
   //console.error('isEpilogue:', isEpilogue);
-  this._createPartParser(isEpilogue); // TODO: True for normal bodies, false for the final one
+  this._createPartParser(!isEpilogue, !isEpilogue);
   this.emit(isEpilogue ? 'epilogue' : 'part', this.currentPart);
 }

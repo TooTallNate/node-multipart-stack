@@ -32,12 +32,15 @@ parser.on('part', function(part) {
     console.error('Part #'+num+':', inspect(text));
     switch(num) {
       case 0:
-        //assert.equal(text, 'This is implicitly typed plain ASCII text.\r\nIt does NOT end with a linebreak.');
+        assert.equal(text, 'This is implicitly typed plain ASCII text.\r\nIt does NOT end with a linebreak.');
         break;
       case 1:
         //assert.equal(text, 'This is explicitly typed plain ASCII text.\r\nIt DOES end with a linebreak.\r\n'); 
         break;
     }
+  });
+  part.on('headers', function(headers) {
+    console.error(headers);
   });
 });
 
