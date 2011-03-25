@@ -22,6 +22,8 @@ parser.on('preamble', function(preamble) {
 });
 
 var partCount = 0;
+var endCount = 0;
+var headerCount = 0;
 parser.on('part', function(part) {
   var num = partCount++;
   var text = '';
@@ -29,18 +31,30 @@ parser.on('part', function(part) {
     text += chunk;
   });
   part.on('end', function() {
-    console.error('Part #'+num+':', inspect(text));
+    endCount++;
+    console.error('Part #'+num+' Body:', inspect(text));
     switch(num) {
       case 0:
         assert.equal(text, 'This is implicitly typed plain ASCII text.\r\nIt does NOT end with a linebreak.');
         break;
       case 1:
-        //assert.equal(text, 'This is explicitly typed plain ASCII text.\r\nIt DOES end with a linebreak.\r\n'); 
+        assert.equal(text, 'This is explicitly typed plain ASCII text.\r\nIt DOES end with a linebreak.\r\n'); 
         break;
     }
   });
   part.on('headers', function(headers) {
-    console.error(headers);
+    headerCount++;
+    console.error('Part #'+num+' Headers:', headers);
+    switch(num) {
+      case 0:
+        assert.equal(headers.length, 0);
+        break;
+      case 1:
+        assert.equal(headers.length, 1);
+        assert.equal(headers[0].key, 'Content-type');
+        assert.equal(headers[0].value, 'text/plain; charset=us-ascii');
+        break;
+    }
   });
 });
 
@@ -61,4 +75,6 @@ process.on('exit', function() {
   assert.ok(gotPreamble);
   assert.ok(gotEpilogue);
   assert.equal(partCount, 2);
+  assert.equal(endCount, 2);
+  assert.equal(headerCount, 2);
 });
