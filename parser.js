@@ -21,6 +21,7 @@ function Parser(stream, boundary) {
   // The PartParser first checks for the ending boundary, if that
   // isn't there, then it checks for the normal one
   this.beginningOfBoundary = new Buffer(CRLF[0], 'ascii');
+  this.beginningBoundary = new Buffer(BOUNDARY_SIDE+boundary+CRLF, 'ascii'); // Only used by the '_isBeginning' edge-case
   this.normalBoundary = new Buffer(CRLF+BOUNDARY_SIDE+boundary+CRLF, 'ascii');
   this.endingBoundary = new Buffer(CRLF+BOUNDARY_SIDE+boundary+BOUNDARY_SIDE+CRLF, 'ascii');
 

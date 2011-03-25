@@ -24,6 +24,11 @@ function PartParser(parent, parseHeaders) {
   this.isFinalBoundary = false;
   this._ended = false;
   this._buffers = new BufferList();
+  // This is for a special edge-case where the read stream begins on a boundary, and
+  // does not begin with a CRLF. In that case, this PartParser should end immediately.
+  // After it gets set to `false`, this edge-case should no longer be checked for.
+  this._isBeginning = true;
+
   var self = this;
   if (parseHeaders) {
     this._headerParser = new HeaderParser(new Stream());
@@ -93,6 +98,10 @@ PartParser.prototype._parseBody = function parseBody(chunk) {
       this._buffers.advance(this.parent.normalBoundary.length);
       //console.error('found normal boundary');
       this._end();
+    } else if (this._isBeginning && buf.indexOf(this.parent.beginningBoundary) === 0) {
+      this._buffers.advance(this.parent.beginningBoundary.length);
+      //console.error('found beginning boundary at without a beginning CRLF');
+      this._end();
     } else {
       var s = buf.indexOf(this.parent.beginningOfBoundary);
       if (s === 0) {
@@ -107,6 +116,7 @@ PartParser.prototype._parseBody = function parseBody(chunk) {
       this._buffers.advance(s);
       //console.error("Emitting data: ", slice, slice+'');
       this.emit('data', slice);
+      this._isBeginning = false;
       this._parseBody();
     }
   } else {
