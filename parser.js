@@ -60,8 +60,15 @@ Parser.prototype._createPartParser = function createPartParser(parseHeaders, lis
 }
 
 Parser.prototype._partParserFinished = function partParserFinished() {
-  var isEpilogue = this.currentPart.isFinalBoundary;
-  //console.error('isEpilogue:', isEpilogue);
-  this._createPartParser(!isEpilogue, !isEpilogue);
-  this.emit(isEpilogue ? 'epilogue' : 'part', this.currentPart);
+  function ensureParserStarted() {
+    var isEpilogue = this.currentPart.isFinalBoundary;
+    //console.error('isEpilogue:', isEpilogue);
+    this._createPartParser(!isEpilogue, !isEpilogue);
+    this.emit(isEpilogue ? 'epilogue' : 'part', this.currentPart);
+  }
+  if (this._started) {
+    ensureParserStarted.call(this);
+  } else {
+    this.once('_start', ensureParserStarted.bind(this));
+  }
 }
