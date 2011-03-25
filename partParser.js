@@ -1,4 +1,5 @@
 require('bufferjs');
+var Stream = require('stream').Stream;
 var BufferList = require('bufferlist');
 var StreamStack = require('stream-stack').StreamStack;
 var HeaderParser = require('header-stack').Parser;
@@ -25,7 +26,7 @@ function PartParser(parent, parseHeaders) {
   this._buffers = new BufferList();
   var self = this;
   if (parseHeaders) {
-    this._headerParser = new HeaderParser(parent.stream);
+    this._headerParser = new HeaderParser(new Stream());
     this._headerParser.on('headers', this._onHeaders.bind(this));
   }
   if (parent._started) {
