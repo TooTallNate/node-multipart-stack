@@ -37,7 +37,7 @@ module.exports = http.createServer(function(req, res) {
       });
     });
   } else {
-    res.setCode(404);
+    res.writeHead(404, {});
     res.end();
   }
 }).listen(3000);
