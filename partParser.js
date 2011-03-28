@@ -138,14 +138,15 @@ PartParser.prototype._parseBody = function parseBody(chunk) {
 PartParser.prototype._onEnd = function onEnd() {
   console.error('got "end" event from upstream');
   function flushBuffersThenEnd() {
-    if (this._buffers.length > 0) {
+    
+    if (this._buffers.length > 0 && this === this.parent.currentPart) {
       // emit any remaining 'data' in the buffers
       var remaining = this._buffers.take();
       this._buffers.advance(remaining.length);
       //console.error(remaining, remaining + '');
       this.emit('data', remaining);
     }
-    this._end();
+    this.parent.currentPart._end();
   }
   if (this.parent._started) {
     flushBuffersThenEnd.call(this);
