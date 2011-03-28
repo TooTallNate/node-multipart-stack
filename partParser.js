@@ -19,7 +19,7 @@ function PartParser(parent, parseHeaders) {
     },
     end: this._onEnd
   });
-  console.error('creating new PartParser; parseHeaders:', parseHeaders);
+  //console.error('creating new PartParser; parseHeaders:', parseHeaders);
   this.parent = parent;
   this.isFinalBoundary = false;
   this._ended = false;
@@ -40,7 +40,7 @@ function PartParser(parent, parseHeaders) {
     // We just have to buffer any incoming data until the Parser starts.
     this._onData = this._bufferData;
     parent.on('_start', function() {
-      console.error('got "_start" event, _buffers.length:', self._buffers.length, ', parent._started:', parent._started);
+      //console.error('got "_start" event, _buffers.length:', self._buffers.length, ', parent._started:', parent._started);
       self._onData = parseHeaders ? self._parseHeaders : self._parseBody;
       if (self._buffers.length > 0) {
         var buf = self._buffers.take();
@@ -55,17 +55,17 @@ module.exports = PartParser;
 
 
 PartParser.prototype._bufferData = function bufferData(chunk) {
-  console.error('_bufferData:', chunk, 'parent._started:', this.parent._started);
+  //console.error('_bufferData:', chunk, 'parent._started:', this.parent._started);
   this._buffers.push(chunk);
 }
 
 PartParser.prototype._parseHeaders = function parseHeaders(chunk) {
-  console.error('_parseHeaders:', chunk);
+  //console.error('_parseHeaders:', chunk);
   this._headerParser._onData(chunk);
 }
 
 PartParser.prototype._onHeaders = function onHeaders(headers, leftover) {
-  console.error('_onHeaders');
+  //console.error('_onHeaders');
   this._onData = this._parseBody;
   this.emit('headers', headers);
   if (leftover) {
@@ -86,26 +86,26 @@ PartParser.prototype._onHeaders = function onHeaders(headers, leftover) {
 //   beginning of the "potential" boundary.
 //  -Repeat from step 1, checking for a boundary again, etc.
 PartParser.prototype._parseBody = function parseBody(chunk) {
-  console.error('_parseBody');
+  //console.error('_parseBody');
   if (chunk) {
     this._bufferData(chunk);
   }
-  console.error(this._buffers.length);
+  //console.error(this._buffers.length);
   if (this._buffers.length >= this.parent.endingBoundary.length) {
     var buf = this._buffers.take();
-    console.error("Gonna do something with: ", buf, buf+'');
+    //console.error("Gonna do something with: ", buf, buf+'');
     if (buf.indexOf(this.parent.endingBoundary) === 0) {
       this.isFinalBoundary = true;
       this._buffers.advance(this.parent.endingBoundary.length);
-      console.error('found ending boundary!');
+      //console.error('found ending boundary!');
       this._end();
     } else if (buf.indexOf(this.parent.normalBoundary) === 0) {
       this._buffers.advance(this.parent.normalBoundary.length);
-      console.error('found normal boundary');
+      //console.error('found normal boundary');
       this._end();
     } else if (this._isBeginning && buf.indexOf(this.parent.beginningBoundary) === 0) {
       this._buffers.advance(this.parent.beginningBoundary.length);
-      console.error('found beginning boundary at without a beginning CRLF');
+      //console.error('found beginning boundary at without a beginning CRLF');
       this._end();
     } else {
       var s = buf.indexOf(this.parent.beginningOfBoundary);
@@ -116,10 +116,10 @@ PartParser.prototype._parseBody = function parseBody(chunk) {
       if (s === -1) {
         s = this.parent.endingBoundary.length;
       }
-      console.error(s);
+      //console.error(s);
       var slice = buf.slice(0, s);
       this._buffers.advance(s);
-      console.error("Emitting data: ", slice, slice+'');
+      //console.error("Emitting data: ", slice, slice+'');
       this.emit('data', slice);
       this._isBeginning = false;
       this._parseBody();
@@ -136,7 +136,7 @@ PartParser.prototype._parseBody = function parseBody(chunk) {
 //   2) We're parsing the epilogue, and anything in the buffers should be emitted
 //      to the user. There will be no ending boundary to parse out.
 PartParser.prototype._onEnd = function onEnd() {
-  console.error('got "end" event from upstream');
+  //console.error('got "end" event from upstream');
   function flushBuffersThenEnd() {
     
     if (this._buffers.length > 0 && this === this.parent.currentPart) {
@@ -157,7 +157,7 @@ PartParser.prototype._onEnd = function onEnd() {
 
 // Ensures we only fire the 'end' event once per part.
 PartParser.prototype._end = function () {
-  console.error('got "_end"');
+  //console.error('got "_end"');
   if (!this._ended) {
     this._ended = true;
     this.cleanup();
