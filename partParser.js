@@ -31,7 +31,7 @@ function PartParser(parent, parseHeaders) {
 
   var self = this;
   if (parseHeaders) {
-    this._headerParser = new HeaderParser(new Stream());
+    this._headerParser = new HeaderParser(new Stream(), parent.headerOpts);
     this._headerParser.on('headers', this._onHeaders.bind(this));
   }
   if (parent._started) {
