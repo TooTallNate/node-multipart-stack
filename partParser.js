@@ -33,6 +33,7 @@ function PartParser(parent, parseHeaders) {
   if (parseHeaders) {
     this._headerParser = new HeaderParser(new Stream(), parent.headerOpts);
     this._headerParser.on('headers', this._onHeaders.bind(this));
+    this._headerParser.on('error', this.emit.bind(this, 'error'));
   }
   if (parent._started) {
     this._onData = parseHeaders ? this._parseHeaders : this._parseBody;
