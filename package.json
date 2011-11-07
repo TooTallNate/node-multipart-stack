@@ -14,14 +14,7 @@
     "bufferlist": ">= 0.0.6",
     "bufferjs": ">= 0.2.3"
   },
-  "directories": {
-    "lib": "."
-  },
   "engines": {
     "node": ">= 0.4.0"
-  },
-  "files": [
-    ""
-  ],
-  "devDependencies": {}
+  }
 }
